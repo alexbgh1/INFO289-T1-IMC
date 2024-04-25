@@ -1,0 +1,186 @@
+﻿Build1=Default,b4a.example
+File1=bajo.jpg
+File10=sobrepeso-1.jpg
+File2=normal.jpg
+File3=obeso.jpg
+File4=pantalla1.bal
+File5=Poppins-Bold.ttf
+File6=Poppins-Light.ttf
+File7=Poppins-Medium.ttf
+File8=Poppins-Regular.ttf
+File9=sobrepeso.jpg
+FileGroup1=Default Group\Images
+FileGroup10=Default Group\Images
+FileGroup2=Default Group\Images
+FileGroup3=Default Group\Images
+FileGroup4=Default Group
+FileGroup5=Default Group\Fonts
+FileGroup6=Default Group\Fonts
+FileGroup7=Default Group\Fonts
+FileGroup8=Default Group\Fonts
+FileGroup9=Default Group\Images
+Group=Default Group
+IconFile=
+Library1=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=10
+NumberOfLibraries=1
+NumberOfModules=1
+Version=8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Calcula IMC
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	'Cambiamos a Fullscreen y quitamos le título
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private WeightLabel As Label
+	Private HeightLabel As Label
+	Private ResultLabel As Label
+	Private PhotoImageView As ImageView
+	Private WeightInput As EditText
+	Private HeightInput As EditText
+	Private ComputeButton As Button
+	Private AnswerTitleLabel As Label
+	Private ResultDescriptionLabel As Label
+	Private PhotoBgPanel As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("pantalla1")
+	
+	'Button Color Call to Action
+	Dim computeButtonRGB As ColorDrawable
+	computeButtonRGB.Initialize(Colors.rgb(4,30,50), 2%x)
+	ComputeButton.Background = computeButtonRGB
+End Sub
+
+
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+' Declaramos como (Parameter As ParameterType ) As ReturnType
+Sub ValidatePositiveNumber(Number As String) As Boolean
+	If (IsNumber(Number) And Number > 0) Then
+		Return True
+	End If
+	Return False
+End Sub
+
+'Peso es menor a 400kg
+Sub ValidateWeight(Number As String) As Boolean
+	If (ValidatePositiveNumber(Number)) Then
+		If (Number <= 400) Then
+			Return True
+		End If
+	End If
+	Return False
+End Sub
+
+'Altura es menor a 260cm
+Sub ValidateHeight(Number As String) As Boolean
+	If (ValidatePositiveNumber(Number)) Then
+		If (Number <= 260) Then
+			Return True
+		End If
+	End If
+	Return False
+End Sub
+
+'Calcular el IMC con WeightInput y HeightInput
+Sub ComputeButton_Click
+	Dim weightValue, heightValue, result As Double
+	If (Not (ValidateWeight(WeightInput.Text)) Or Not (ValidateHeight(HeightInput.Text))) Then
+		ToastMessageShow("Debes ingresar números, hasta 400kg y 260cm como máximo", False)
+		Return
+	End If
+	weightValue = WeightInput.Text
+	heightValue = HeightInput.Text
+	result = weightValue/(Power(heightValue*0.01,2))
+	RenderResult(result)
+End Sub
+
+Sub ExactBodyTypeValue(result As Double) As String()
+	Dim bodyType As String
+	Dim comment As String
+
+	If (result <= 18) Then
+		bodyType = "Bajo"
+		comment = "Tienes un peso bajo, no deberías seguir el ejemplo de Toallín."
+	Else If (result <= 25) Then
+		bodyType = "Normal"
+		comment = "Estás dentro del rango normal de peso, ¡sigue así!"
+	Else If (result <= 29.9) Then
+		bodyType = "Sobrepeso"
+		comment = "Tienes sobrepeso, ¿qué diría Cartman al respecto?"
+	Else
+		bodyType = "Obeso"
+		comment = "Tienes obesidad, ser un Chef tiene sus desventajas..."
+	End If
+
+	Dim resultArray(2) As String
+	resultArray(0) = bodyType
+	resultArray(1) = comment
+
+	Return resultArray
+End Sub
+
+Sub RenderResult(result As Double)
+	'Chaning to Visibility 1; AnswerTitleLabel, ResultLabel, PhotoImageView
+	'bodyTypeValue es un arreglo con 2 casilla de String
+	Dim bodyTypeValue(2) As String
+	AnswerTitleLabel.Visible = True
+	ResultLabel.Visible = True
+	PhotoImageView.Visible = True
+	ResultDescriptionLabel.Visible = True
+	PhotoBgPanel.Visible = True
+	
+	'Updating Values and Image based in body type
+	bodyTypeValue = ExactBodyTypeValue(result)
+	ResultLabel.Text = Round2(result,2)
+	ResultDescriptionLabel.Text = bodyTypeValue(1)
+	UpdateResultImage(bodyTypeValue(0))
+End Sub
+
+Sub UpdateResultImage( source As String)
+	'source should end in .jpg or similar
+	Dim finalSource As String
+	finalSource =  source.ToLowerCase() & ".jpg" ' &: concat
+	PhotoImageView.Bitmap = LoadBitmap(File.DirAssets,finalSource)
+End Sub
+
+'Al menos en HTML por temas de accesibilidad se asocian los Label a los Input por medio de id
+Sub WeightLabel_Click
+	WeightLabel = Sender
+	WeightInput.RequestFocus
+End Sub
+Sub HeightLabel_Click
+	HeightLabel = Sender
+	HeightInput.RequestFocus
+End Sub
